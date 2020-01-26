@@ -4,6 +4,7 @@ A model for solving 2-D heat conduction through multiple materials with user def
 These are the initial notes I made for what I would like to include:
 
 -Material represented by 2D array
+
 --	each cell represents dX.dY
 ---		calculated at start (array)
 --	properties unique to each cell
