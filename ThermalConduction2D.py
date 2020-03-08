@@ -84,7 +84,7 @@ Nx = int(total_length / dx)      #number of increments in X & Y directiosn [-]
 Ny = int(total_width / dy)
 
 
-total_time = 500        #final time condition [s]
+total_time = 250        #final time condition [s]
 dt = 0.6                  #time interval [s]
 Nt = int(total_time / dt)    #number of increments in time
 
@@ -96,7 +96,7 @@ properties = {'T':0,'kT': 0,'cp':0,'rho':0,'BC':False} #dict of properties each 
 
                               #B.C: Boolean term to identify cells containing boundary condition
 
-
+ss_tol = 0.01 #tolerance for steady state calculation to solve to
 
 #------------------------------Creating Model--------------------------------
 #creating array to store results                        
@@ -123,18 +123,50 @@ topology = np.array([copy.deepcopy(topology) for itt in range(Nt)]) #duplicate f
 # Equation Functions:
 #     Function for collected term 'alpha'
 alphaF = lambda top: top[0,0,0]['kT']/(top[0,0,0]['cp']*top[0,0,0]['rho'])
+
 #     Function for FDM Euler approximation of the 2-D heat equation
 heat_eqn = lambda top, alpha, dt, dx, dy, itt, itx, ity: top[itt,ity,itx]['T'] + dt*alpha*( ((top[itt,ity-1,itx]['T']-2*top[itt,ity,itx]['T']+top[itt,ity+1,itx]['T'])/dx**2) + ((top[itt,ity,itx-1]['T']-2*top[itt,ity,itx]['T']+top[itt,ity,itx+1]['T'])/dy**2) )
 
+#     FDM Heat equation re-arranged for steady state conditions where dT/dt = 0 
+ss_heat_eqn = lambda top, dx, dy, itx, ity: (dx**2*(top[ity-1,itx]+top[ity+1,itx])+dy**2*(top[ity,itx-1]+top[ity,itx+1]))/(2*(dx**2 + dy**2))
+
+#     Stability condition function
+stab = lambda dt,dx,dy,alpha: dt*2*alpha*((dx**-2) + (dy**-2))
 
 
-stab = lambda dt,dx,dy,alpha: dt*2*alpha*((dx**-2) + (dy**-2)) # stability condition value
+
 
 alphaV = alphaF(topology) # assigning to variables for convinience, in the future it will simply be just the functions
-stabV = stab(dt,dx,dy,alphaV)
+stabV = stab(dt,dx,dy,alphaV)  # stability constant of system
 
 stab_pass = False #Gatekeeper for stability check
 
+
+
+#-------------------------------~~Steady State~~------------------------------
+topo_ss = showTop(topology,'T',0) # assign initial conditions from time = 0
+topo_ss_next = topo_ss.copy() # stores the next iteration of the calculation
+
+max_ss_err = 1; min_ss_err = 1; # allocating error values
+k = 1
+while (max_ss_err >= ss_tol) or (min_ss_err >= ss_tol):
+    #print(k)
+    for ity in range(1,Ny-1):
+        
+        for itx in range(1,Nx-1):
+            topo_ss_next[ity,itx] = ss_heat_eqn(topo_ss,dx,dy,itx,ity) # calculate T steady-state
+            
+    ss_diff = topo_ss_next-topo_ss
+            
+    max_ss_err = np.abs(np.max(np.max(ss_diff[np.nonzero(ss_diff)]))) # return the difference between the greatest values
+    min_ss_err = np.abs(np.min(np.min(ss_diff[np.nonzero(ss_diff)]))) # return the difference between the greatest values
+    
+    topo_ss = topo_ss_next.copy()
+    k += 1 # count to calculate time in a later update ( time to s.s = k * dt )
+    
+
+
+#-------------------------------~~Dynamic Section~~------------------------------
 # Checking model stability for solving
 if stabV > 1:
     print('Stability condition is not met')
@@ -143,18 +175,35 @@ else:
     stab_pass = True
 # FDM & Euler's Solution:
     for itt in range(Nt-1):
+        
         for itY in range(1,Ny-1):
+            
             for itX in range(1,Nx-1):
+                
                 if topology[itt,itX,itY]['BC'] == False:
                     topology[itt+1,itY,itX]['T'] = heat_eqn(topology,alphaV,dt,dx,dy,itt,itX,itY)
                     
-                    
-                    
 
+            
+            
+            
 #---------------------------------Results-------------------------------------
 
-    #???Final version will show begin/end as sublots, possibility for animation?
+# Steady State Plot
+                    
+plt.rcParams["figure.figsize"]= 8,7 # this will need to be calculated
+ax = sns.heatmap(topo_ss,cmap = "plasma",cbar_kws={'label':'Temperature ($^{o}$C)'},square = False)
+plt.xlabel('X (m)')
+plt.ylabel('Y (m)')
+plt.title('Temperature Profile at Steady State')
 
+plt.xticks(np.linspace(0,Nx,int(Nx/2)),np.round(np.linspace(0,total_width,int(Nx/2)),decimals = 2),rotation = 'vertical')
+plt.yticks(np.linspace(Ny,0,int(Ny/2)),np.round(np.linspace(0,total_length,int(Ny/2)),decimals = 2),rotation = 'horizontal')
+
+plt.show()
+
+
+# Dynamic Plot
 
 if stab_pass == True:
 
