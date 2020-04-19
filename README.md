@@ -5,7 +5,7 @@ These are the initial notes I made for what I would like to include:
 
 -Material represented by 2D array
 
---	each cell represents dX.dY
+--	each cell represents dX.dY (done)
 
 ---		calculated at start (array)
 
@@ -22,7 +22,7 @@ These are the initial notes I made for what I would like to include:
 
 -Initial Value Problem and Calculations
 
--- 	calculate for time T
+-- 	calculate for time T (done)
 
 --- 	use variety of solving methods
 
@@ -31,9 +31,9 @@ These are the initial notes I made for what I would like to include:
 
 -Return results as a visual representation
 
--- 	Heatmap can show each property specified by user/pre-determined
+-- 	Heatmap can show each property specified by user/pre-determined (done)
 
---  Sub-plot of start and end condition
+--  Sub-plot of start and end condition 
 
 --  Make use of animation to show change of heat spread/properties with time?
 
