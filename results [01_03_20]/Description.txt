@@ -1,2 +1,0 @@
-These results have come from using boundary conditions of 75C @ x = 0, and 45C @ x = 1m (end)
-They show the heat across the plate at times 100 seconds and 500 seconds of a 500 second test.
