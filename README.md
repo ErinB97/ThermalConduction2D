@@ -13,18 +13,18 @@ These are the initial notes I made for what I would like to include:
 
 ---		properties can be calculated for each cell
 
---	can be imported / designed by user
+--	can be imported / designed by user (WIP)
 
----		use excel spreadsheet + macros, or image tool such as paint.net to "paint" the materials and IVP
+---		use excel spreadsheet + macros, or image tool such as paint.net to "paint" the materials and IVP (WIP)
 
----   write a GUI instead (TKinter?)
+---   write a GUI instead (TKinter?) (next)
 
 
 -Initial Value Problem and Calculations
 
 -- 	calculate for time T (done)
 
---- 	use variety of solving methods
+--- 	use variety of solving methods (done)
 
 --  allow for properties to be re-calculated on each iteration instead of assuming constant
 
@@ -33,7 +33,7 @@ These are the initial notes I made for what I would like to include:
 
 -- 	Heatmap can show each property specified by user/pre-determined (done)
 
---  Sub-plot of start and end condition 
+--  Sub-plot of start and end condition (future)
 
---  Make use of animation to show change of heat spread/properties with time?
+--  Make use of animation to show change of heat spread/properties with time? (not doing)
 
