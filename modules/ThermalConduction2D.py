@@ -138,7 +138,10 @@ while (max_ss_err >= ss_tol) or (min_ss_err >= ss_tol):
     for ity in range(1,Ny-1):
         
         for itx in range(1,Nx-1):
-            topo_ss_next[ity,itx] = ss_heat_eqn(topo_ss,dx,dy,itx,ity) # calculate T steady-state
+            
+            if topology[0,ity,itx]['BC'] == False:
+                
+                topo_ss_next[ity,itx] = ss_heat_eqn(topo_ss,dx,dy,itx,ity) # calculate T steady-state
             
     ss_diff = topo_ss_next-topo_ss
             
@@ -164,16 +167,18 @@ if stab_pass == True:
    
     if method == 'euler':
         
-        euler_err_max = [] #creating lists to store error
-        euler_err_min = []
+        euler_err_max = [] #creating list to store error
         
         for itt in range(Nt-1):
             
             if itt > 0:
                 # checking if calculation has converged to steady state
-                if (( 0 < euler_err_max[itt-1] <= dyn_tol) or (0 < euler_err_min[itt-1] <= dyn_tol)) :
-                    solve_time = int((itt-1)*dt) # calculating time to reach steady state
+                if ( 0 < euler_err_max[itt-1] <= dyn_tol) :
+                    # calculating time to reach steady state
+                    
+                    solve_time = int((itt-1)*dt)
                     print('Euler converged to S.S tolerance within %d iterations with a time of %d seconds' %(itt-1,solve_time))
+                    print('Euler greatest difference to S.S values is: %f' %euler_err_max[itt-1])
                     break     
                     
             
@@ -190,16 +195,18 @@ if stab_pass == True:
             #Calculating and checking error
                         
             euler_frame = showTop(topology,'T',itt+1,N)
-            euler_diff =  euler_frame - topo_ss
+            euler_diff =  np.abs((euler_frame - topo_ss))
             
-            euler_err_max.append(np.round(np.abs(np.max(np.max(euler_diff))),5))
-            euler_err_min.append(np.round(np.abs(np.min(np.min(euler_diff))),5))
+            euler_err_max.append(np.round(np.max(np.max(euler_diff[np.nonzero(euler_diff)])),3))
+           
             
             if itt > 0:
                 # Checking for incorrect convergance where error converges at non-zero value
-                if ((euler_err_max[itt] == euler_err_max[itt-1] ) or (euler_err_min[itt] == euler_err_min[itt-1])) and (euler_err_max[itt] != 0):
+                if (euler_err_max[itt] == euler_err_max[itt-1] )  and (euler_err_max[itt] != 0):                    
+                    
                     showConvergeWarning = True
-                    # This cannot be used as an error because it cannot be succesfully be applied to scenarios w
+                    break
+                    
                     
                     
             # Checking for an incorrect calculation if a temperautre is calculated outside the range of initial conditions    
@@ -210,20 +217,23 @@ if stab_pass == True:
         # Give warning on possible bad convergance.
             
         if showConvergeWarning == True:
-            print('Euler Warning: Solution may be have outside steady state. This can however be caused by a small deltaT')
+            solve_time = int((itt-1)*dt)
+            print('Euler converged to 3 d.p at %.3f within %d iterations with a time of %d seconds' %(euler_err_max[-1],itt-1,solve_time))
             
+        
+        
 # 2nd Order Runge-Kutta                      
     elif method == 'RK':
         
-        RK_err_max = [] # creating error arrays
-        RK_err_min = []
+        RK_err_max = [] # creating list to store error
         
         for itt in range(Nt-1):
             
             if itt > 0:
-                if (( 0 < RK_err_max[itt-1] <= dyn_tol) or (0 < RK_err_min[itt-1] <= dyn_tol)) :
+                if ( 0 < RK_err_max[itt-1] <= dyn_tol)  :
                     solve_time = int((itt-1)*dt)
                     print('RK converged to S.S tolerance tolerance within %d iterations with a time of %d seconds' %(itt-1,solve_time))
+                    print('RK greatest difference to S.S values is: %f' %RK_err_max[itt-1])
                     break     
             
             for itY in range(1,Ny-1):
@@ -247,14 +257,14 @@ if stab_pass == True:
             #Calculating and checking error
             
             RK_frame = showTop(topology,'T',itt+1,N)
-            RK_diff =  RK_frame - topo_ss
+            RK_diff = np.abs(RK_frame - topo_ss)
             
-            RK_err_max.append(np.round(np.abs(np.max(np.max(RK_diff))),5))
-            RK_err_min.append(np.round(np.abs(np.min(np.min(RK_diff))),5))
+            RK_err_max.append(np.round(np.abs(np.max(np.max(RK_diff[np.nonzero(RK_diff)]))),3))
+            
             
             if itt > 0:
                 # Checking for incorrect convergance, where error converges at non-zero value
-                if ((RK_err_max[itt] == RK_err_max[itt-1] ) or (RK_err_min[itt] == RK_err_min[itt-1])) and (RK_err_max[itt] != 0):
+                if (RK_err_max[itt] == RK_err_max[itt-1] ) and (RK_err_max[itt] != 0):
                     showConvergeWarning = True
                     
             # Checking for an incorrect calculation if a temperautre is calculated outside the range of initial conditions
@@ -265,7 +275,8 @@ if stab_pass == True:
          
         # Give warning on possible bad convergance.
         if showConvergeWarning == True:
-            print('RK Warning: Solution may be have outside steady state. This can however be caused by a small deltaT')
+            solve_time = int((itt-1)*dt)
+            print('RK converged to 3 d.p at %.3f within %d iterations with a time of %d seconds' %(RK_err_max[-1],itt-1,solve_time))
 
 #----------------------------------Plotting Results---------------------------
 
@@ -294,6 +305,7 @@ if stab_pass == True:
     ax = plotTopology(dim,N,topology,'kT','dyn',solve_time ,plot_time)
     plt.show()
 
+    
     # Plot temperature
     ax = plotTopology(dim,N,topology,'T','dyn',solve_time ,plot_time)
     plt.show()
@@ -302,6 +314,13 @@ if stab_pass == True:
     plt.show()
     
     ax = plotTopology(dim,N,topology,'T','dyn')
+    plt.show()
+    
+    # Plot error
+    ax = plt.plot(euler_err_max)
+    plt.xlabel('Iterations')
+    plt.ylabel('Calculation Error')
+    plt.title('Convergenace of Error ($^{o}$C)')
     plt.show()
     
 # Steady State Plot:
